@@ -46,15 +46,15 @@ module sys_top
 	//////////// SDR ///////////
 	output [12:0] SDRAM_A,
 	inout  [15:0] SDRAM_DQ,
-	//output        SDRAM_DQML,
-	//output        SDRAM_DQMH,
+//	output        SDRAM_DQML,
+//	output        SDRAM_DQMH,
 	output        SDRAM_nWE,
 	output        SDRAM_nCAS,
 	output        SDRAM_nRAS,
 	output        SDRAM_nCS,
 	output  [1:0] SDRAM_BA,
 	output        SDRAM_CLK,
-	//output        SDRAM_CKE,
+//	output        SDRAM_CKE,
 
 `ifdef MISTER_DUAL_SDRAM
 	////////// SDR #2 //////////
@@ -69,47 +69,47 @@ module sys_top
 
 `else
 	//////////// VGA ///////////
-	//output  [5:0] VGA_R,
-	//output  [5:0] VGA_G,
-	//output  [5:0] VGA_B,
-	//inout         VGA_HS,
-	//output		  VGA_VS,
-	//input         VGA_EN,  // active low
+//	output  [5:0] VGA_R,
+//	output  [5:0] VGA_G,
+//	output  [5:0] VGA_B,
+//	inout         VGA_HS,
+//	output		  VGA_VS,
+//	input         VGA_EN,  // active low
 
 	/////////// AUDIO //////////
-	//output		  AUDIO_L,
-	//output		  AUDIO_R,
-	//output		  AUDIO_SPDIF,
+//	output		  AUDIO_L,
+//	output		  AUDIO_R,
+//	output		  AUDIO_SPDIF,
 
 	//////////// SDIO ///////////
-	//inout   [3:0] SDIO_DAT,
-	//inout         SDIO_CMD,
-	//output        SDIO_CLK,
+//	inout   [3:0] SDIO_DAT,
+//	inout         SDIO_CMD,
+//	output        SDIO_CLK,
 
 	//////////// I/O ///////////
-	//output        LED_USER,
-	//output        LED_HDD,
-	//output        LED_POWER,
-	//input         BTN_USER,
-	//input         BTN_OSD,
-	//input         BTN_RESET,
+//	output        LED_USER,
+//	output        LED_HDD,
+//	output        LED_POWER,
+//	input         BTN_USER,
+//	input         BTN_OSD,
+//	input         BTN_RESET,
 `endif
 
 	////////// I/O ALT /////////
-	//output        SD_SPI_CS,
-	//input         SD_SPI_MISO,
-	//output        SD_SPI_CLK,
-	//output        SD_SPI_MOSI,
-
-	//inout         SDCD_SPDIF,
-	//output        IO_SCL,
-	//inout         IO_SDA,
+//	output        SD_SPI_CS,
+//	input         SD_SPI_MISO,
+//	output        SD_SPI_CLK,
+//	output        SD_SPI_MOSI,
+//
+//	inout         SDCD_SPDIF,
+//	output        IO_SCL,
+//	inout         IO_SDA,
 
 	////////// ADC //////////////
-	//output        ADC_SCK,
-	//input         ADC_SDO,
-	//output        ADC_SDI,
-	//output        ADC_CONVST,
+//	output        ADC_SCK,
+//	input         ADC_SDO,
+//	output        ADC_SDI,
+//	output        ADC_CONVST,
 
 	////////// MB KEY ///////////
 	input   [1:0] KEY,
@@ -121,7 +121,7 @@ module sys_top
 	output  [7:0] LED
 
 	///////// USER IO ///////////
-	//inout   [6:0] USER_IO
+//	inout   [6:0] USER_IO
 );
 
 ///////////////////////// Senhor: Initializations ////////////////////////
@@ -159,7 +159,7 @@ wire BTN_RESET = 1'b1, BTN_OSD = 1'b1, BTN_USER = 1'b1;
 //	assign SD_SPI_CLK  = mcp_sdcd ? 1'bZ : SD_CLK;
 //	assign SD_SPI_MOSI = mcp_sdcd ? 1'bZ : SD_MOSI;
 //`endif
-//
+
 //////////////////////  LEDs/Buttons  ///////////////////////////////////
 
 reg [7:0] led_overtake = 0;
@@ -201,10 +201,10 @@ wire io_dig = mcp_en ? mcp_mode : SW[3];
 	assign LED_USER  = VGA_TX_CLK;
 	wire   BTN_DIS   = VGA_EN;
 `else
-	wire   BTN_RESET = SDRAM2_DQ[9];
-	wire   BTN_OSD   = SDRAM2_DQ[13];
-	wire   BTN_USER  = SDRAM2_DQ[11];
-	wire   BTN_DIS   = SDRAM2_DQ[15];
+	wire   BTN_RESET = 1'b1;
+	wire   BTN_OSD   = 1'b1;
+	wire   BTN_USER  = 1'b1;
+	wire   BTN_DIS   = 1'b1;
 `endif
 
 reg BTN_EN = 0;
@@ -233,12 +233,12 @@ always @(posedge FPGA_CLK2_50) begin
 	div <= div + 1'b1;
 	if(div > 100000) div <= 0;
 
-   if(!div) begin
-//		deb_user <= {deb_user[6:0], btn_u | ~KEY[0]};  //MiSTer: ~KEY[1] Senhor: Buttons are switched for convenience.
+	if(!div) begin
+		deb_user <= {deb_user[6:0], btn_u | ~KEY[0]};
 		if(&deb_user) btn_user <= 1;
 		if(!deb_user) btn_user <= 0;
 
-//		deb_osd <= {deb_osd[6:0], btn_o | ~KEY[1]}; //MiSTer: ~KEY[0] Senhor: Buttons are switched for convenience.
+		deb_osd <= {deb_osd[6:0], btn_o | ~KEY[1]};
 		if(&deb_osd) btn_osd <= 1;
 		if(!deb_osd) btn_osd <= 0;
 	end
@@ -349,6 +349,7 @@ reg [11:0] vs_line = 0;
 
 reg        scaler_out = 0;
 reg        vrr_mode = 0;
+wire       hdmi_blackout;
 
 reg [31:0] aflt_rate = 7056000;
 reg [39:0] acx  = 4258969;
@@ -770,6 +771,7 @@ wire         freeze;
 		.vmax     (vmax),
 		.vrr      (vrr_mode),
 		.vrrmax   (HEIGHT + VBP + VS[11:0] + 12'd1),
+		.swblack  (hdmi_blackout),
 
 		.mode     ({~lowlat,LFB_EN ? LFB_FLT : |scaler_flt,2'b00}),
 		.poly_clk (clk_sys),
@@ -1537,7 +1539,7 @@ assign SDCD_SPDIF = (mcp_en & ~spdif) ? 1'b0 : 1'bZ;
 	assign AUDIO_L     = av_dis ? 1'bZ : (SW[0] | mcp_en) ? HDMI_SCLK  : analog_l;
 `endif
 
-assign HDMI_MCLK = 1'b0;
+assign HDMI_MCLK = clk_audio;
 wire clk_audio;
 
 pll_audio pll_audio
@@ -1752,6 +1754,7 @@ emu emu
 	.HDMI_WIDTH(direct_video ? 12'd0 : hdmi_width),
 	.HDMI_HEIGHT(direct_video ? 12'd0 : hdmi_height),
 	.HDMI_FREEZE(freeze),
+	.HDMI_BLACKOUT(hdmi_blackout),
 
 	.CLK_VIDEO(clk_vid),
 	.CE_PIXEL(ce_pix),
